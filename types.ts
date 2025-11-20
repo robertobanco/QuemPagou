@@ -52,3 +52,15 @@ export interface UserSettings {
   user1Name: string; // Antes userName
   user2Name: string; // Antes partnerName
 }
+
+// Declaração global para o seletor de chave de API do ambiente
+declare global {
+  interface AIStudio {
+    hasSelectedApiKey(): Promise<boolean>;
+    openSelectKey(): Promise<void>;
+  }
+
+  interface Window {
+    aistudio?: AIStudio;
+  }
+}

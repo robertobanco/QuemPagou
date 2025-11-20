@@ -13,7 +13,8 @@ import {
   Sparkles,
   Settings,
   Share2,
-  Copy
+  Copy,
+  Key
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { Expense, MonthlyBalance, Frequency, Payer, CategoryType, UserSettings } from './types';
@@ -162,9 +163,44 @@ const App = () => {
   
   const handleGenerateInsight = async () => {
     setIsLoadingAi(true);
-    const insight = await getFinancialInsights(balance, expenses, settings);
-    setAiInsight(insight);
-    setIsLoadingAi(false);
+    try {
+      // API Key Selection Flow (BYOK)
+      if (window.aistudio) {
+        const hasKey = await window.aistudio.hasSelectedApiKey();
+        if (!hasKey) {
+          try {
+            await window.aistudio.openSelectKey();
+            // Proceed immediately after selection logic resolves
+          } catch (err) {
+            console.warn("User cancelled key selection");
+            setIsLoadingAi(false);
+            return;
+          }
+        }
+      }
+
+      const insight = await getFinancialInsights(balance, expenses, settings);
+      setAiInsight(insight);
+    } catch (error: any) {
+      console.error("AI Error:", error);
+      
+      // Handle specific error for invalid key/entity not found by re-prompting
+      if (error.message?.includes("Requested entity was not found") && window.aistudio) {
+        try {
+           alert("A chave de API parece inválida ou expirada. Por favor, selecione o projeto novamente.");
+           await window.aistudio.openSelectKey();
+           // Retry once
+           const insight = await getFinancialInsights(balance, expenses, settings);
+           setAiInsight(insight);
+        } catch (retryError) {
+           setAiInsight("Erro ao conectar. Por favor, tente novamente mais tarde.");
+        }
+      } else {
+        setAiInsight("Erro ao conectar com o assistente. Verifique sua conexão.");
+      }
+    } finally {
+      setIsLoadingAi(false);
+    }
   };
 
   const handleShareSummary = async () => {
@@ -356,9 +392,20 @@ const App = () => {
                 <h3 className="text-lg font-semibold text-slate-100">Consultor Inteligente</h3>
               </div>
               {!aiInsight && (
-                <Button variant="secondary" size="sm" onClick={handleGenerateInsight} isLoading={isLoadingAi}>
-                  Gerar Análise
-                </Button>
+                <div className="flex gap-2">
+                  {window.aistudio && (
+                     <button 
+                      onClick={() => window.aistudio?.openSelectKey()} 
+                      className="p-2 text-slate-400 hover:text-amber-400 transition-colors"
+                      title="Configurar Conta Google"
+                     >
+                       <Key size={18} />
+                     </button>
+                  )}
+                  <Button variant="secondary" size="sm" onClick={handleGenerateInsight} isLoading={isLoadingAi}>
+                    Gerar Análise
+                  </Button>
+                </div>
               )}
             </div>
             
@@ -371,7 +418,9 @@ const App = () => {
               </div>
             ) : (
                <p className="text-slate-400 text-sm relative z-0">
-                 Clique para analisar os gastos de {settings.user1Name} e {settings.user2Name}.
+                 Clique para analisar os gastos de {settings.user1Name} e {settings.user2Name} usando IA.
+                 <br/>
+                 <span className="text-xs opacity-60">Você precisará conectar sua conta Google (uso gratuito).</span>
                </p>
             )}
           </section>

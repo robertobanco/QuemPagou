@@ -1,14 +1,15 @@
 import { GoogleGenAI } from "@google/genai";
 import { Expense, MonthlyBalance, Payer, UserSettings, CategoryType } from '../types';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 export const getFinancialInsights = async (
   currentMonth: MonthlyBalance,
   expenses: Expense[],
   settings: UserSettings
 ): Promise<string> => {
   try {
+    // Inicializa o cliente aqui para garantir que usamos a chave mais atual (selecionada pelo usuário)
+    // Isso permite que cada usuário use sua própria cota gratuita (BYOK)
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const model = 'gemini-2.5-flash';
     
     const u1 = settings.user1Name;
@@ -64,6 +65,6 @@ export const getFinancialInsights = async (
     return response.text || "Não foi possível gerar insights no momento.";
   } catch (error) {
     console.error("Error fetching Gemini insights:", error);
-    return "Erro ao conectar com o assistente financeiro. Verifique sua chave de API.";
+    throw error; // Re-throw para ser tratado no componente
   }
 };

@@ -11,7 +11,6 @@ import {
   ChevronLeft, 
   ChevronRight,
   Sparkles,
-  Settings,
   Share2,
   Copy,
   Key
@@ -19,7 +18,6 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { Expense, MonthlyBalance, Frequency, Payer, CategoryType, UserSettings } from './types';
 import { ExpenseForm } from './components/ExpenseForm';
-import { SettingsModal } from './components/SettingsModal';
 import { Button } from './components/Button';
 import { calculateMonthlyBalance, formatCurrency, generateProjection, getMonthKey, addMonths, getCategoryInfo } from './utils';
 import { getFinancialInsights } from './services/geminiService';
@@ -86,7 +84,6 @@ const App = () => {
   const [currentMonth, setCurrentMonth] = useState(getMonthKey(new Date()));
   
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | undefined>(undefined);
 
   const [aiInsight, setAiInsight] = useState<string | null>(null);
@@ -303,13 +300,6 @@ const App = () => {
                   <ChevronRight size={16} className="sm:w-5 sm:h-5" />
                 </button>
               </div>
-              <button 
-                onClick={() => setIsSettingsOpen(true)}
-                className="p-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-white hover:bg-slate-700 transition"
-                title="Configurações"
-              >
-                <Settings size={18} className="sm:w-5 sm:h-5" />
-              </button>
             </div>
           </div>
         </header>
@@ -348,13 +338,31 @@ const App = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-4 pt-4 border-t border-indigo-500/30 relative z-0">
-                <div>
-                  <p className="text-[10px] text-indigo-300 uppercase font-bold tracking-wider mb-1">{settings.user1Name}</p>
+                <div className="group/edit">
+                  <div className="flex items-center gap-1 mb-1 relative">
+                     <input 
+                       type="text" 
+                       value={settings.user1Name} 
+                       onChange={(e) => setSettings({...settings, user1Name: e.target.value})}
+                       className="bg-transparent border-b border-transparent hover:border-indigo-300/50 focus:border-indigo-300 outline-none text-[10px] text-indigo-300 uppercase font-bold tracking-wider w-full transition-all placeholder-indigo-300/50"
+                       placeholder="Nome 1"
+                     />
+                     <Pencil size={10} className="text-indigo-300/50 opacity-0 group-hover/edit:opacity-100 transition-opacity absolute right-0 pointer-events-none" />
+                  </div>
                   <p className="text-xs text-indigo-300/80">Pagou: <span className="text-white font-semibold">{formatCurrency(balance.paidByMe)}</span></p>
                   <p className="text-xs text-indigo-300/80">Parte Justa: {formatCurrency(balance.myFairShare)}</p>
                 </div>
-                <div>
-                  <p className="text-[10px] text-indigo-300 uppercase font-bold tracking-wider mb-1">{settings.user2Name}</p>
+                <div className="group/edit">
+                  <div className="flex items-center gap-1 mb-1 relative">
+                     <input 
+                       type="text" 
+                       value={settings.user2Name} 
+                       onChange={(e) => setSettings({...settings, user2Name: e.target.value})}
+                       className="bg-transparent border-b border-transparent hover:border-indigo-300/50 focus:border-indigo-300 outline-none text-[10px] text-indigo-300 uppercase font-bold tracking-wider w-full transition-all placeholder-indigo-300/50"
+                       placeholder="Nome 2"
+                     />
+                     <Pencil size={10} className="text-indigo-300/50 opacity-0 group-hover/edit:opacity-100 transition-opacity absolute right-0 pointer-events-none" />
+                  </div>
                   <p className="text-xs text-indigo-300/80">Pagou: <span className="text-white font-semibold">{formatCurrency(balance.paidByPartner)}</span></p>
                   <p className="text-xs text-indigo-300/80">Parte Justa: {formatCurrency(balance.partnerFairShare)}</p>
                 </div>
@@ -651,17 +659,6 @@ const App = () => {
             user2Name={settings.user2Name}
             onSave={handleSaveExpense} 
             onCancel={() => setIsFormOpen(false)} 
-          />
-        )}
-
-        {isSettingsOpen && (
-          <SettingsModal
-            currentSettings={settings}
-            onSave={(newSettings) => {
-              setSettings(newSettings);
-              setIsSettingsOpen(false);
-            }}
-            onCancel={() => setIsSettingsOpen(false)}
           />
         )}
       </div>

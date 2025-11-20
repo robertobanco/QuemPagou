@@ -178,7 +178,7 @@ const App = () => {
     }
 
     const lines = [
-      `📊 *Resumo DuoBalance - ${monthName}*`,
+      `📊 *Resumo Quem Pagou? - ${monthName}*`,
       `-----------------------------`,
       `💰 Total Gastos: ${formatCurrency(balance.totalExpenses)}`,
       `👤 ${settings.user1Name} pagou: ${formatCurrency(balance.paidByMe)}`,
@@ -236,7 +236,7 @@ const App = () => {
           <div className="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div className="flex items-center gap-2 text-indigo-400 shrink-0 mr-2">
               <Wallet className="h-6 w-6 sm:h-8 sm:w-8" />
-              <h1 className="text-lg sm:text-xl font-bold tracking-tight text-white">DuoBalance</h1>
+              <h1 className="text-lg sm:text-xl font-bold tracking-tight text-white">Quem Pagou?</h1>
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="flex items-center bg-slate-800 rounded-lg p-0.5 sm:p-1 border border-slate-700 relative">

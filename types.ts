@@ -53,12 +53,4 @@ export interface UserSettings {
   user2Name: string; // Antes partnerName
 }
 
-// Declaração global para o seletor de chave de API do ambiente
-declare global {
-  interface Window {
-    aistudio?: {
-      hasSelectedApiKey(): Promise<boolean>;
-      openSelectKey(): Promise<void>;
-    };
-  }
-}
+// Fix: Removed conflicting global declaration for window.aistudio as it is already defined with type AIStudio in the environment.

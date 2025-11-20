@@ -13,11 +13,13 @@ import {
   Sparkles,
   Share2,
   Copy,
-  Key
+  Key,
+  Settings
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { Expense, MonthlyBalance, Frequency, Payer, CategoryType, UserSettings } from './types';
 import { ExpenseForm } from './components/ExpenseForm';
+import { SettingsModal } from './components/SettingsModal';
 import { Button } from './components/Button';
 import { calculateMonthlyBalance, formatCurrency, generateProjection, getMonthKey, addMonths, getCategoryInfo } from './utils';
 import { getFinancialInsights } from './services/geminiService';
@@ -43,18 +45,8 @@ const migrateExpense = (oldExpense: any): Expense => {
   };
 };
 
-const INITIAL_EXPENSES_RAW: any[] = [
-  {
-    id: '1',
-    title: 'Aluguel',
-    amount: 2500,
-    date: '2023-10-01',
-    payer: 'ME',
-    category: 'HOME',
-    frequency: 'MONTHLY',
-    ownershipPercentage: 50
-  }
-];
+// Inicia sem despesas para que o usuário inclua as suas
+const INITIAL_EXPENSES_RAW: any[] = [];
 
 const DEFAULT_SETTINGS: UserSettings = {
   user1Name: 'Participante 1',
@@ -84,6 +76,7 @@ const App = () => {
   const [currentMonth, setCurrentMonth] = useState(getMonthKey(new Date()));
   
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | undefined>(undefined);
 
   const [aiInsight, setAiInsight] = useState<string | null>(null);
@@ -123,6 +116,11 @@ const App = () => {
     setIsFormOpen(false);
     setEditingExpense(undefined);
     setAiInsight(null); 
+  };
+
+  const handleSaveSettings = (newSettings: UserSettings) => {
+    setSettings(newSettings);
+    setIsSettingsOpen(false);
   };
 
   const handleEditClick = (expense: Expense) => {
@@ -254,10 +252,10 @@ const App = () => {
   const [yearStr, monthStrVal] = currentMonth.split('-');
   const dateObj = new Date(parseInt(yearStr), parseInt(monthStrVal) - 1, 1, 12, 0, 0);
   
-  const longDate = dateObj.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  const longDate = isNaN(dateObj.getTime()) ? 'Data Inválida' : dateObj.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
   
   // Custom format for mobile: nov/25
-  const monthNameShort = dateObj.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+  const monthNameShort = isNaN(dateObj.getTime()) ? '--' : dateObj.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
   const yearShort = yearStr.slice(-2);
   const shortDate = `${monthNameShort}/${yearShort}`; 
 
@@ -300,6 +298,15 @@ const App = () => {
                   <ChevronRight size={16} className="sm:w-5 sm:h-5" />
                 </button>
               </div>
+
+              {/* Settings Button */}
+              <button 
+                onClick={() => setIsSettingsOpen(true)} 
+                className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-lg border border-slate-700 transition-colors"
+                title="Configurações e Nomes"
+              >
+                <Settings size={20} />
+              </button>
             </div>
           </div>
         </header>
@@ -338,30 +345,24 @@ const App = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-4 pt-4 border-t border-indigo-500/30 relative z-0">
-                <div className="group/edit">
+                <div className="group/edit cursor-text" onClick={() => setIsSettingsOpen(true)}>
                   <div className="flex items-center gap-1 mb-1 relative">
-                     <input 
-                       type="text" 
-                       value={settings.user1Name} 
-                       onChange={(e) => setSettings({...settings, user1Name: e.target.value})}
-                       className="bg-transparent border-b border-transparent hover:border-indigo-300/50 focus:border-indigo-300 outline-none text-[10px] text-indigo-300 uppercase font-bold tracking-wider w-full transition-all placeholder-indigo-300/50"
-                       placeholder="Nome 1"
-                     />
-                     <Pencil size={10} className="text-indigo-300/50 opacity-0 group-hover/edit:opacity-100 transition-opacity absolute right-0 pointer-events-none" />
+                     {/* Name Display (Click to edit via modal or inline) */}
+                     <div className="flex items-center gap-2 w-full border-b border-indigo-300/30 pb-0.5 hover:border-indigo-300 transition-colors">
+                       <span className="text-[10px] text-indigo-300 uppercase font-bold tracking-wider">{settings.user1Name}</span>
+                       <Pencil size={10} className="text-indigo-300 opacity-70" />
+                     </div>
                   </div>
                   <p className="text-xs text-indigo-300/80">Pagou: <span className="text-white font-semibold">{formatCurrency(balance.paidByMe)}</span></p>
                   <p className="text-xs text-indigo-300/80">Parte Justa: {formatCurrency(balance.myFairShare)}</p>
                 </div>
-                <div className="group/edit">
+                
+                <div className="group/edit cursor-text" onClick={() => setIsSettingsOpen(true)}>
                   <div className="flex items-center gap-1 mb-1 relative">
-                     <input 
-                       type="text" 
-                       value={settings.user2Name} 
-                       onChange={(e) => setSettings({...settings, user2Name: e.target.value})}
-                       className="bg-transparent border-b border-transparent hover:border-indigo-300/50 focus:border-indigo-300 outline-none text-[10px] text-indigo-300 uppercase font-bold tracking-wider w-full transition-all placeholder-indigo-300/50"
-                       placeholder="Nome 2"
-                     />
-                     <Pencil size={10} className="text-indigo-300/50 opacity-0 group-hover/edit:opacity-100 transition-opacity absolute right-0 pointer-events-none" />
+                     <div className="flex items-center gap-2 w-full border-b border-indigo-300/30 pb-0.5 hover:border-indigo-300 transition-colors">
+                       <span className="text-[10px] text-indigo-300 uppercase font-bold tracking-wider">{settings.user2Name}</span>
+                       <Pencil size={10} className="text-indigo-300 opacity-70" />
+                     </div>
                   </div>
                   <p className="text-xs text-indigo-300/80">Pagou: <span className="text-white font-semibold">{formatCurrency(balance.paidByPartner)}</span></p>
                   <p className="text-xs text-indigo-300/80">Parte Justa: {formatCurrency(balance.partnerFairShare)}</p>
@@ -496,6 +497,9 @@ const App = () => {
                        <Calendar className="text-slate-600" size={24} />
                     </div>
                     <p>Nenhuma despesa registrada neste mês.</p>
+                    <Button variant="ghost" onClick={handleNewClick} className="mt-2 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-950/30">
+                       Adicionar primeira despesa
+                    </Button>
                  </div>
                </div>
             ) : (
@@ -518,12 +522,14 @@ const App = () => {
                         const categoryInfo = getCategoryInfo(expense.category);
                         const CategoryIcon = categoryInfo.icon;
                         const [y, m, d] = expense.date.split('-').map(Number);
+                        // Valid date check for display
                         const displayDate = new Date(y, m-1, d, 12, 0, 0);
+                        const dateStr = isNaN(displayDate.getTime()) ? '--' : displayDate.toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'});
 
                         return (
                           <tr key={expense.id} className="hover:bg-slate-800/50 transition-colors group">
                             <td className="px-6 py-4 whitespace-nowrap font-mono text-slate-500">
-                              {displayDate.toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'})}
+                              {dateStr}
                             </td>
                             <td className="px-6 py-4 font-medium text-slate-200">
                               <div className="flex items-center gap-2">
@@ -595,6 +601,7 @@ const App = () => {
                     const CategoryIcon = categoryInfo.icon;
                     const [y, m, d] = expense.date.split('-').map(Number);
                     const displayDate = new Date(y, m-1, d, 12, 0, 0);
+                    const dateStr = isNaN(displayDate.getTime()) ? '--' : displayDate.toLocaleDateString('pt-BR', {day: '2-digit', month: 'long'});
 
                     return (
                       <div key={expense.id} className="p-4 hover:bg-slate-800/30 active:bg-slate-800/50 transition-colors">
@@ -606,7 +613,7 @@ const App = () => {
                             <div>
                               <p className="font-medium text-slate-200">{expense.title}</p>
                               <p className="text-xs text-slate-500">
-                                {displayDate.toLocaleDateString('pt-BR', {day: '2-digit', month: 'long'})}
+                                {dateStr}
                                 {expense.frequency === Frequency.INSTALLMENTS && ' • Parcelado'}
                               </p>
                             </div>
@@ -659,6 +666,14 @@ const App = () => {
             user2Name={settings.user2Name}
             onSave={handleSaveExpense} 
             onCancel={() => setIsFormOpen(false)} 
+          />
+        )}
+
+        {isSettingsOpen && (
+          <SettingsModal
+            currentSettings={settings}
+            onSave={handleSaveSettings}
+            onCancel={() => setIsSettingsOpen(false)}
           />
         )}
       </div>
